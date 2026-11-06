@@ -43,6 +43,17 @@ internal static class Program
             && new HotkeyBinding(3, 0x2E).Validate() is null, "system combinations deferred to Windows registration");
         Check(HotkeyBinding.Capture(Key.P, ModifierKeys.Windows) == new HotkeyBinding(8, 0x50)
             && new HotkeyBinding(8, 0x50).Label == "Win + P", "Windows modifiers preserved and labeled");
+        Check(HotkeyBinding.ResolveKey(Key.ImeProcessed, Key.None, Key.A, Key.None) == Key.A
+            && HotkeyBinding.ResolveKey(Key.System, Key.F4, Key.None, Key.None) == Key.F4
+            && HotkeyBinding.ResolveKey(Key.DeadCharProcessed, Key.None, Key.None, Key.OemQuotes) == Key.OemQuotes,
+            "IME, system and dead-character events resolve to actual keys");
+        Check(new HotkeyBinding(0, 0xE5).Validate() is not null && new HotkeyBinding(0, 0xE7).Validate() is not null,
+            "IME processed and text packet pseudo-keys rejected");
+        var invalidIme = new AppSettings { AlwaysOnTop = true };
+        invalidIme.Hotkeys.Bindings["toggle"] = new(0, 0xE5);
+        var recoveredIme = AppSettings.FromJson(JsonSerializer.Serialize(invalidIme));
+        Check(recoveredIme.Hotkeys.Bindings["toggle"] == new HotkeyBinding(3, 0x20) && recoveredIme.AlwaysOnTop,
+            "previously saved ImeProcessed shortcut recovers to defaults");
 
         using var firstSource = new HwndSource(new HwndSourceParameters("Hotkey verification 1") { Width = 0, Height = 0 });
         using var secondSource = new HwndSource(new HwndSourceParameters("Hotkey verification 2") { Width = 0, Height = 0 });
@@ -81,6 +92,8 @@ internal static class Program
         first.Disable();
 
         var dialog = new HotkeySettingsWindow(settings.Hotkeys, _ => null);
+        Check(!InputMethod.GetIsInputMethodEnabled((DependencyObject)dialog.FindName("ToggleKeyBox")),
+            "shortcut recording fields disable IME composition");
         var content = (FrameworkElement)dialog.Content;
         dialog.Content = null;
         var surface = new Border { Background = Brushes.White, Resources = dialog.Resources, Child = content };

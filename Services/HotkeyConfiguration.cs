@@ -31,6 +31,8 @@ public sealed record HotkeyBinding(uint Modifiers, int VirtualKey)
     {
         if ((Modifiers & ~15u) != 0) return "快捷键包含无法识别的修饰键。";
         var key = KeyInterop.KeyFromVirtualKey(VirtualKey);
+        if (VirtualKey is 0xE5 or 0xE7 || key is Key.ImeProcessed or Key.DeadCharProcessed or Key.System)
+            return "输入法处理标记不是实际按键，请重新录入快捷键。";
         if (VirtualKey is < 1 or > 254 || key is Key.None or Key.LeftCtrl or Key.RightCtrl
             or Key.LeftAlt or Key.RightAlt or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin)
             return "请按下一个有效按键，不能只使用修饰键。";
@@ -46,6 +48,14 @@ public sealed record HotkeyBinding(uint Modifiers, int VirtualKey)
         if (modifiers.HasFlag(ModifierKeys.Windows)) nativeModifiers |= 8;
         return new(nativeModifiers, KeyInterop.VirtualKeyFromKey(key));
     }
+
+    public static Key ResolveKey(Key key, Key systemKey, Key imeKey, Key deadCharKey) => key switch
+    {
+        Key.System => systemKey,
+        Key.ImeProcessed => imeKey,
+        Key.DeadCharProcessed => deadCharKey,
+        _ => key
+    };
 }
 
 public sealed class HotkeyConfiguration

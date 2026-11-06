@@ -10,6 +10,7 @@
         Background="White">
   <Window.Resources>
     <Style TargetType="TextBox">
+      <Setter Property="InputMethod.IsInputMethodEnabled" Value="False" />
       <Setter Property="IsReadOnly" Value="True" />
       <Setter Property="Padding" Value="12,8" />
       <Setter Property="BorderBrush" Value="#D4D4D8" />

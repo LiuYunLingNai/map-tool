@@ -26,7 +26,7 @@ public partial class HotkeySettingsWindow : Window
 
     private void Hotkey_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        var key = HotkeyBinding.ResolveKey(e.Key, e.SystemKey, e.ImeProcessedKey, e.DeadCharProcessedKey);
         e.Handled = true;
         if (e.IsRepeat || key is Key.LeftCtrl or Key.RightCtrl or Key.LeftAlt or Key.RightAlt or Key.LeftShift or Key.RightShift or Key.LWin or Key.RWin) return;
         var binding = HotkeyBinding.Capture(key, Keyboard.Modifiers);
