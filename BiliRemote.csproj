@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>BiliRemote</AssemblyName>
+    <Version>0.1.0</Version>
+    <Product>BiliRemote</Product>
+    <Description>B 站快捷播放器：全局快捷键、自定义按键、窗口置顶与简洁模式。</Description>
+    <RootNamespace>BiliRemote</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RestorePackagesPath>$(MSBuildThisFileDirectory).packages</RestorePackagesPath>
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+    <EmbeddedResource Include="Browser/VideoController.js" />
+    <Compile Remove="tests/**/*.cs" />
+  </ItemGroup>
+</Project>

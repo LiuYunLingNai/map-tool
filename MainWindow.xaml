@@ -1,0 +1,111 @@
+<!--
+  Visual constraints: video/browser is primary; transport and address are secondary;
+  shortcut hints and status are tertiary. Only play/pause is a filled primary action.
+  Grayscale system: white surface, #F4F4F5 background, #18181B / #52525B text,
+  #D4D4D8 borders. Spacing 4/8/12/16/24, type 12/14/16, radius 8. Native WPF.
+-->
+<Window x:Class="BiliRemote.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="BiliRemote · B 站快捷播放器" Width="1280" Height="840"
+        MinWidth="320" MinHeight="240" WindowStartupLocation="CenterScreen"
+        Background="#F4F4F5" FontFamily="Microsoft YaHei UI, Segoe UI" FontSize="14"
+        Foreground="#18181B" Loaded="Window_Loaded" Closing="Window_Closing">
+  <Window.Resources>
+    <SolidColorBrush x:Key="MutedText" Color="#52525B" />
+    <Style TargetType="Button">
+      <Setter Property="Padding" Value="12,8" />
+      <Setter Property="Margin" Value="0,0,8,0" />
+      <Setter Property="Background" Value="White" />
+      <Setter Property="BorderBrush" Value="#D4D4D8" />
+      <Setter Property="Foreground" Value="#18181B" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="MinHeight" Value="36" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="Surface" CornerRadius="8" BorderThickness="1"
+                    Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
+                    Padding="{TemplateBinding Padding}">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.8" /></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="#18181B" /></Trigger>
+              <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Opacity" Value="0.4" /></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+    <Border x:Name="NavigationToolbar" Background="White" BorderBrush="#D4D4D8" BorderThickness="0,0,0,1" Padding="16,12">
+      <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <WrapPanel VerticalAlignment="Center" Margin="0,0,0,8">
+          <TextBlock Text="BiliRemote" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,16,0" />
+          <Button x:Name="BackButton" Content="←" ToolTip="返回上一页" Click="Back_Click" AutomationProperties.Name="返回上一页" IsEnabled="False" />
+          <Button x:Name="ForwardButton" Content="→" ToolTip="前往下一页" Click="Forward_Click" AutomationProperties.Name="前往下一页" IsEnabled="False" />
+          <Button Content="首页" Click="Home_Click" />
+          <Button Content="刷新" Click="Refresh_Click" />
+          <Button Content="收起工具栏" Click="ToggleToolbars_Click" ToolTip="收起后，右键标题栏选择“显示工具栏”即可恢复" />
+        </WrapPanel>
+        <Grid Grid.Row="1">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+        <TextBox x:Name="AddressBox" Text="https://www.bilibili.com/"
+                 VerticalContentAlignment="Center" Padding="12,8" BorderBrush="#D4D4D8" BorderThickness="1"
+                 KeyDown="AddressBox_KeyDown" AutomationProperties.Name="B 站网址" />
+          <Button Grid.Column="1" Content="打开" Click="Navigate_Click" Margin="8,0,0,0" />
+        </Grid>
+      </Grid>
+    </Border>
+
+    <Grid Grid.Row="1">
+      <wv2:WebView2 x:Name="Browser" />
+      <Border x:Name="LoadingPanel" Background="#F4F4F5" Visibility="Visible">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="480">
+          <TextBlock x:Name="LoadingTitle" Text="正在打开 B 站…" FontSize="24" FontWeight="SemiBold" TextAlignment="Center" />
+          <TextBlock x:Name="LoadingDetail" Text="网页载入后，选择视频即可使用快捷键。" Foreground="{StaticResource MutedText}"
+                     Margin="0,16,0,24" TextWrapping="Wrap" TextAlignment="Center" />
+          <Button x:Name="RetryButton" Content="重试" Visibility="Collapsed" Click="Retry_Click" HorizontalAlignment="Center" Margin="0" />
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <Border x:Name="PlaybackToolbar" Grid.Row="2" Background="White" BorderBrush="#D4D4D8" BorderThickness="0,1,0,0" Padding="16,12">
+      <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="240">
+      <StackPanel>
+          <WrapPanel x:Name="TransportPanel" IsEnabled="False">
+            <Button x:Name="RewindButton" Content="−10 秒" ToolTip="Ctrl + Alt + ←" Click="Rewind_Click" />
+            <Button x:Name="ToggleButton" Content="播放 / 暂停" Background="#18181B" Foreground="White" BorderBrush="#18181B"
+                    FontWeight="SemiBold" ToolTip="Ctrl + Alt + 空格" Click="Toggle_Click" />
+            <Button x:Name="SeekButton" Content="+10 秒" ToolTip="Ctrl + Alt + →" Click="Seek_Click" />
+            <Button x:Name="StopButton" Content="停止" ToolTip="Ctrl + Alt + S：暂停并回到开头" Click="Stop_Click" />
+          </WrapPanel>
+          <WrapPanel Margin="0,12,0,0" VerticalAlignment="Center">
+            <TextBlock Text="跳转步长" Foreground="{StaticResource MutedText}" VerticalAlignment="Center" Margin="0,0,8,0" />
+            <ComboBox x:Name="StepBox" Width="76" SelectedIndex="1" SelectionChanged="StepBox_SelectionChanged"
+                      VerticalContentAlignment="Center" Padding="4" AutomationProperties.Name="前进和后退的秒数">
+              <ComboBoxItem Content="5 秒" Tag="5" /><ComboBoxItem Content="10 秒" Tag="10" /><ComboBoxItem Content="30 秒" Tag="30" />
+            </ComboBox>
+            <CheckBox x:Name="GlobalHotkeysBox" Content="全局快捷键" IsChecked="True" Margin="24,0,0,0"
+                      VerticalAlignment="Center" Click="GlobalHotkeys_Click" ToolTip="开启后，切换到其他应用也能控制视频" />
+          </WrapPanel>
+        <WrapPanel Margin="0,12,0,0">
+          <Button Content="自定义快捷键" Click="HotkeySettings_Click" />
+          <CheckBox x:Name="AlwaysOnTopBox" Content="窗口置顶" VerticalAlignment="Center" Margin="16,0,0,0"
+                    Click="AlwaysOnTop_Click" ToolTip="让播放器窗口保持在其他普通窗口上方" />
+        </WrapPanel>
+        <TextBlock x:Name="StatusText" Text="正在初始化浏览器…" Foreground="{StaticResource MutedText}" Margin="0,12,0,0" TextWrapping="Wrap" />
+        <TextBlock x:Name="ShortcutHint" Text="Ctrl + Alt + 空格：播放/暂停    ·    ← / →：后退/前进    ·    S：停止（均需 Ctrl + Alt）"
+                   Foreground="{StaticResource MutedText}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap" />
+      </StackPanel>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</Window>
